@@ -40,12 +40,18 @@ function_creation_template = Template(
 )
 
 indent_template = Template(
-    """You are given a task and a snippet of Python code.\n 
-    Bothe the code and the task are delimited by ####.\n
-    You job is to check if the code solves the task. Check the code for correctness and redo the indentation.\n
+    """You are given a task and a script in Python.\n 
+    Both the the script and the task are delimited by ####.\n
+    You job is to check if the script solves the task. 
+    Use the following information to perform the job:\n
+    1. Assume "dff" data frame is already loaded in the environment, so do not create it.\n
+    2. Check if the script solves the task.\n
+    3. Redo the indentation.\n
+    4. Do not add any lines of code unless it is strictly necessary.\n
+    5. If there is nothing to add, return the script as you received it.\n
 
     The answer will be in JSON format using the template:\n
-    {"answer": "code"}
+    {"answer": <code>}
 
     Code:\n
     ####$code#### \n
@@ -59,4 +65,43 @@ indent_template = Template(
     Code: "def fn(a, b): z = a+b return z"
     Answer: {"answer": "def fn(a, b):\n\tz = a + b\n\treturn z"}
     """
+)
+
+save_plot_template = Template(
+    """You receive a script in Python. The script is delimited by ####./n
+
+    If the script contains code that creates and displays a plot, your job is to modify the script. 
+    Rather than displaying, save the plot using the next template as name: ./plots/<current_time>.png ./n
+
+    If the script does not contain code for creating a plot, do not make any changes to it. /n
+
+    The response must be returned as a JSON with the next template:
+    {"answer": <code>, "changed": "true" or "false", "is_plot": "true" or "false"} /n
+
+    Script:\n
+    ####
+    $script
+    ####
+
+    Use the next examples:\n
+    Example 1:\n
+    Script: "import plotly.graph_objects as go
+    fig = go.Figure(data=[go.Pie(labels=df_age['index'], values=df_age['age'], hole=0.3)])
+    fig.show()"\n
+    Response:
+    {"answer": "import plotly.graph_objects as go
+    from datetime import datetime
+    fig = go.Figure(data=[go.Pie(labels=df_age['index'], values=df_age['age'], hole=0.3)])
+    fig.write_image(f'./plots/{datetime.now().strftime("%d-%m-%Y_%H-%M-%S")}.png', engine='kaleido')",
+    "changed": "true",
+    "is_plot": "true"}\n
+
+    Example 2:\n
+    Script: "print('hello')"\n
+    Response:
+    {"answer": "print('hello')",
+    "changed": "false",
+    "is_plot": "false"}
+
+"""
 )
