@@ -16,9 +16,6 @@ def execute_code(code):  # este aici ca sa poata sa ia variabilele direct din gl
     exec(code)
 
 
-st.title("Analytics chat")
-
-
 if "api_key" not in st.session_state:
     st.session_state.api_key = ""
 
@@ -36,6 +33,8 @@ def refresh_df():
     st.session_state.columns = st.session_state.dff.columns.to_list()
 
 
+st.title("Analytics chat")
+
 with st.sidebar:
     st.header("Interact with you data")
 
@@ -50,7 +49,6 @@ with st.sidebar:
         key="widget",
         on_change=submit,
     )
-    print(st.session_state.api_key)
 
     if st.session_state.api_key:
 
@@ -84,8 +82,12 @@ for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         if message["type"] == "text":
             st.text(message["content"])
+            if message.get("code"):
+                st.code(message.get("code"))
         else:
             st.image(message["content"])
+            if message.get("code"):
+                st.code(message.get("code"))
 
 # reactie la input
 
@@ -121,9 +123,15 @@ if prompt := st.chat_input("What is up", disabled=(not st.session_state.valid)):
                 exec(check_plot_response["answer"])
                 path = sorted(Path("plots").glob("*.png"))[-1]
                 st.session_state.messages.append(
-                    {"role": "assistant", "content": str(path), "type": "plot"}
+                    {
+                        "role": "assistant",
+                        "content": str(path),
+                        "type": "plot",
+                        "code": check_plot_response["answer"],
+                    }
                 )
                 st.image(str(path))
+                st.code(check_plot_response["answer"])
 
             else:
 
@@ -133,10 +141,17 @@ if prompt := st.chat_input("What is up", disabled=(not st.session_state.valid)):
                     exec(check_plot_response["answer"])
 
                 captured_output = output_capture.getvalue()
-                st.text(captured_output)
+
                 st.session_state.messages.append(
-                    {"role": "assistant", "content": captured_output, "type": "text"}
+                    {
+                        "role": "assistant",
+                        "content": captured_output,
+                        "type": "text",
+                        "code": check_plot_response["answer"],
+                    }
                 )
+                st.text(captured_output)
+                st.code(check_plot_response["answer"])
 
             st.session_state.dff = dff
             st.session_state.columns = dff.columns.to_list()

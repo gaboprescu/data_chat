@@ -6,6 +6,8 @@ function_creation_template = Template(
 
     Answer the question delimited by #### by creating a script in Python.\n
 
+    Do not assume any information about the data or columns. Check information using Python code.\n
+
     At the end of the script make sure to print the results.\n
 
     Use only Python standard packages, Pandas, Numpy. To create graph and plots use Plotly package.\n
