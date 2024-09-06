@@ -2,12 +2,19 @@ import io
 import json
 from pathlib import Path
 from contextlib import redirect_stdout
-import streamlit as st
-from main import process_question, execute_code
-from agents import save_plot_agent, check_api_key_agent
+import pandas as pd
 import plotly.io as pio
+import streamlit as st
+import processor
+from processor import process_question
+from agents import save_plot_agent, check_api_key_agent
 
 pio.templates.default = "plotly"
+
+
+def execute_code(code):  # este aici ca sa poata sa ia variabilele direct din global
+    exec(code)
+
 
 st.title("Analytics chat")
 
@@ -22,6 +29,11 @@ if "valid" not in st.session_state:
 def submit():
     st.session_state.api_key = st.session_state.widget
     st.session_state.widget = ""
+
+
+def refresh_df():
+    st.session_state.dff = pd.read_csv(st.session_state.uploaded_file)
+    st.session_state.columns = st.session_state.dff.columns.to_list()
 
 
 with st.sidebar:
@@ -55,7 +67,11 @@ with st.sidebar:
             st.markdown(f""":orange[{resp}]""")
 
     st.file_uploader(
-        "Upload dataframe", type=["csv", "tsv"], accept_multiple_files=False
+        "Upload dataframe",
+        key="uploaded_file",
+        type=["csv", "tsv"],
+        accept_multiple_files=False,
+        on_change=refresh_df,
     )
 
 
@@ -85,16 +101,24 @@ if prompt := st.chat_input("What is up", disabled=(not st.session_state.valid)):
     # raspunsul asistentului
     with st.chat_message("assistant"):
         question = prompt
+
+        if "dff" in st.session_state and "columns" in st.session_state:
+            dff = st.session_state.dff
+            columns = st.session_state.columns
+
         try:
             # breakpoint()
-            indent_response = process_question(question)
+            print("THE COLUMNS:\n", columns)
+            indent_response = process_question(question, columns)
 
-            check_plot_response = json.loads(save_plot_agent(indent_response).text)
+            check_plot_response = json.loads(
+                save_plot_agent(indent_response).text, strict=False
+            )
 
-            print("CODE CHECK FOR PLOT:\n", check_plot_response["answer"])
+            print("CODE CHECK FOR PLOT:\n" + check_plot_response["answer"])
 
             if check_plot_response["is_plot"] == "true":
-                execute_code(check_plot_response["answer"])
+                exec(check_plot_response["answer"])
                 path = sorted(Path("plots").glob("*.png"))[-1]
                 st.session_state.messages.append(
                     {"role": "assistant", "content": str(path), "type": "plot"}
@@ -106,13 +130,16 @@ if prompt := st.chat_input("What is up", disabled=(not st.session_state.valid)):
                 output_capture = io.StringIO()
 
                 with redirect_stdout(output_capture):
-                    execute_code(check_plot_response["answer"])
+                    exec(check_plot_response["answer"])
 
                 captured_output = output_capture.getvalue()
                 st.text(captured_output)
                 st.session_state.messages.append(
                     {"role": "assistant", "content": captured_output, "type": "text"}
                 )
+
+            st.session_state.dff = dff
+            st.session_state.columns = dff.columns.to_list()
 
         except Exception as e:
             print(e)
