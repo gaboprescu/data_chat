@@ -1,7 +1,9 @@
-# Chat with your data
+# Chat with your data | Data confident
 ## About
 
 The objective is to give users the posibility to analyse a dataset without writing code or using a dedicated tool for data analytics. Just ask a question or create a task and the program will respond.
+
+And most importat, the data frame is NOT sent to the LLM.
 
 ## How it works
 You need two thing to start chating with your data: a CSV file and an API Key from Gemini.
