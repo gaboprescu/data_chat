@@ -10,11 +10,7 @@ config.read(".config")
 genai.configure(api_key=config["KEYS"]["API_KEY"])
 
 
-def conclusion_agent(
-    messages: List[
-        Dict["role":"user", "content":str] | Dict["role":"assistant", "content":str]
-    ]
-) -> GenerateContentResponse:
+def conclusion_agent(messages: List[Dict]) -> GenerateContentResponse:
     """Agent that takes the question, the generated code and the code execution results and formulates a response.
 
     Args:

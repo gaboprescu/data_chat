@@ -1,10 +1,8 @@
 import re
 import sys
 import inspect
-import numpy as np
 import pandas as pd
-
-# import xml.etree.ElementTree as ET
+from pathlib import Path
 
 
 def print_colored(text, color, end="\n"):
@@ -28,3 +26,17 @@ def clean_dict(x: dict) -> dict:
 
 def clean_answer(x: str) -> str:
     return re.sub("\s{0,}\\n\s{0,}", "\n", x)
+
+
+def read_table(pth):
+    pth = Path(pth)
+
+    if pth.suffix == ".csv":
+        if pth.exists():
+            df = pd.read_csv(pth)
+        else:
+            raise FileExistsError(f"The file {pth} is not there")
+    else:
+        raise ValueError(f"The file {pth} is not csv")
+
+    return df

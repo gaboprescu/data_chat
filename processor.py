@@ -1,4 +1,5 @@
 import io
+import sys
 import json
 import pandas as pd
 import numpy as np
@@ -7,11 +8,10 @@ from contextlib import redirect_stdout
 import plotly.express as px
 import plotly.graph_objects as go
 from agents import function_creation_agent, indent_agent
-from functions import print_colored
+from functions import print_colored, read_table
 
 # create data
-data = pd.read_csv("./data/student-perf.csv", sep=",")
-dff = pd.DataFrame(data)
+dff = read_table(sys.argv[1])
 columns = dff.columns.to_list
 
 
