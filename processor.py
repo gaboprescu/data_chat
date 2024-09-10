@@ -10,10 +10,6 @@ import plotly.graph_objects as go
 from agents import function_creation_agent, indent_agent
 from functions import print_colored, read_table
 
-# create data
-dff = read_table(sys.argv[1])
-columns = dff.columns.to_list()
-
 
 def process_question(
     question: str, columns: List[str], diagnostic: bool = True
@@ -54,7 +50,7 @@ def process_question(
         return indent_response
 
 
-def cycle_message() -> None:
+def cycle_message(dff) -> None:
     """Create a cycle where the user asks a question and the program responds."""
 
     try:
@@ -99,7 +95,9 @@ def cycle_message() -> None:
 
 
 def main():
-    cycle_message()
+    # create data
+    dff = read_table(sys.argv[1])
+    cycle_message(dff)
 
 
 if __name__ == "__main__":
