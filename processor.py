@@ -12,7 +12,7 @@ from functions import print_colored, read_table
 
 # create data
 dff = read_table(sys.argv[1])
-columns = dff.columns.to_list
+columns = dff.columns.to_list()
 
 
 def process_question(
@@ -59,6 +59,9 @@ def cycle_message() -> None:
 
     try:
         while True:
+
+            # if the column names changes, update in template
+            columns = dff.columns.to_list()
 
             question = input("\n\nAsk a question about the data:\n")
 
