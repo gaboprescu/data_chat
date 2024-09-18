@@ -44,7 +44,7 @@ def function_creation_agent(
     """
 
     client = genai.GenerativeModel(
-        "gemini-1.5-flash",
+        "gemini-1.5-pro",
         generation_config={"response_mime_type": "application/json"},
         system_instruction="You are a data analyst. Your task is to create functions and scripts to apply them to a dataframe to obtain results ",
     )

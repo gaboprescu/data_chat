@@ -45,9 +45,9 @@ After the user send a question, the question is processed by `process_question()
 
 Before starting the program, you must have the Gemini API Key. Place it in the [.config](.config) file without quotes.
 
-To start the program just use `python processor.py`. The interaction will be made in the Terminal window. 
+To start the program just use `python processor.py <path_to_csv`. The interaction will be made in the Terminal window. 
 
-For demonstration purpose, a dataframe is already loaded, so you do not have to upload one. Just start asking to discover it.
+For demonstration purpose, you already have two CSV files in your project. Chose one of them and start asking questions to discover it.
 
 The program does not have much error handling at this moment, so if the execution encounters error, it might end. Only a few errors are captured and handled.
 

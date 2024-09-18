@@ -6,11 +6,13 @@ function_creation_template = Template(
 
     Answer the question delimited by #### by creating a script in Python.\n
 
-    Do not assume any information about the data or columns. Check information using Python code.\n
+    Use the next rules to generate the code:/n
+    1. Do not assume any information about the data or columns. Check information using Python code.
+    Example: if there is column called gender, do not assume the the values are "female" and "male". Check the information.\n
 
-    At the end of the script make sure to print the results.\n
+    2. At the end of the script make sure to print the results.\n
 
-    Use only Python standard packages, Pandas, Numpy. To create graph and plots use Plotly package.\n
+    3. Use only Python standard packages, Pandas, Numpy, Scikit-Learn, SciPy . To create graph and plots use Plotly package.\n
 
     The answer will be in JSON format using the template:\n
 
@@ -107,3 +109,6 @@ save_plot_template = Template(
 
 """
 )
+
+
+### INSERARE TIP DE COLOANE
