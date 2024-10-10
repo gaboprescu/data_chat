@@ -1,8 +1,11 @@
 import re
 import sys
 import inspect
-import pandas as pd
+from typing import Literal
 from pathlib import Path
+import pandas as pd
+from openai import OpenAI
+import google.generativeai as genai
 
 
 def print_colored(text, color, end="\n"):
@@ -40,3 +43,51 @@ def read_table(pth):
         raise ValueError(f"The file {pth} is not csv")
 
     return df
+
+
+def check_api_key(api_key: str, which: Literal["openai", "gemini"]) -> str:
+    """Agent to check if the API key is valid. Make a a simple request to the model and
+    depending on the answer it is determined if the key is valid.
+
+    Args:
+        api_key (str): api key for gemini
+
+    Returns:
+        str: empty_key | valid_key | invalid_key | error
+    """
+
+    if api_key == "":
+        return "empty_key"
+
+    if which == "openai":
+        client = OpenAI(api_key=api_key)
+        try:
+            resp = client.chat.completions.create(
+                model="gpt-4o-mini",
+                messages=[{"role": "user", "content": "Tell me joke"}],
+            )
+            return "valid_key"
+        except Exception as e:
+            if e.status_code == 401:
+                return "invalid_key"
+            else:
+                return f"There was an error: {e}"
+
+    elif which == "gemini":
+        genai.configure(api_key=api_key)
+
+        client = genai.GenerativeModel(
+            "gemini-1.5-flash",
+        )
+
+        try:
+            resp = client.generate_content("Tell me a joke")
+            return "valid_key"
+        except Exception as e:
+            if e.reason == "API_KEY_INVALID":
+                return "invalid_key"
+            else:
+                return f"There was an error: {e}"
+
+    else:
+        return "For 'which' arguments chose openai or gemini"

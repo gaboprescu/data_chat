@@ -1,5 +1,6 @@
 import configparser
-from typing import List, Dict
+from typing import List, Dict, Union
+from openai import OpenAI
 import google.generativeai as genai
 from google.generativeai.types.generation_types import GenerateContentResponse
 from templates import function_creation_template, indent_template, save_plot_template
@@ -7,7 +8,7 @@ from templates import function_creation_template, indent_template, save_plot_tem
 config = configparser.ConfigParser()
 config.read(".config")
 
-genai.configure(api_key=config["KEYS"]["API_KEY"])
+genai.configure(api_key=config["KEYS"]["G_API_KEY"])
 
 
 def conclusion_agent(messages: List[Dict]) -> GenerateContentResponse:
@@ -44,7 +45,7 @@ def function_creation_agent(
     """
 
     client = genai.GenerativeModel(
-        "gemini-1.5-pro",
+        "gemini-1.5-flash",
         generation_config={"response_mime_type": "application/json"},
         system_instruction="You are a data analyst. Your task is to create functions and scripts to apply them to a dataframe to obtain results ",
     )
@@ -102,33 +103,3 @@ def save_plot_agent(script: str) -> GenerateContentResponse:
     )
 
     return resp
-
-
-def check_api_key_agent(api_key: str) -> str:
-    """Agent to check if the API key is valid. Make a a simple request to the model and
-    depending on the answer it is determined if the key is valid.
-
-    Args:
-        api_key (str): api key for gemini
-
-    Returns:
-        str: empty_key | valid_key | invalid_key | error
-    """
-
-    if api_key == "":
-        return "empty_key"
-
-    genai.configure(api_key=api_key)
-
-    client = genai.GenerativeModel(
-        "gemini-1.5-flash",
-    )
-
-    try:
-        resp = client.generate_content("Tell me a joke")
-        return "valid_key"
-    except Exception as e:
-        if e.reason == "API_KEY_INVALID":
-            return "invalid_key"
-        else:
-            return f"There was an error: {e}"
