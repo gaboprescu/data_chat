@@ -1,4 +1,6 @@
 import io
+import re
+from datetime import datetime
 import json
 from openai import OpenAI
 from contextlib import redirect_stdout
@@ -84,6 +86,7 @@ class DfCodeAgent:
         df,
         api_key,
         model="gemini-1.5-flash",
+        save_plot=False,
         keep_history=True,
         diagnostics=True,
         check_history=False,
@@ -95,6 +98,7 @@ class DfCodeAgent:
         self._diagnostics = diagnostics
         self._check_history = check_history
         self._keep_history = check_history | keep_history
+        self._save_plot = save_plot
         self.history = []
 
     def _create_client(self, api_key):
@@ -103,7 +107,6 @@ class DfCodeAgent:
 
         self.client = genai.GenerativeModel(
             self.model,
-            # generation_config={"response_mime_type": "application/json"},
             generation_config=genai.GenerationConfig(
                 response_mime_type="application/json", response_schema=CodeResponse
             ),
@@ -141,7 +144,21 @@ class DfCodeAgent:
         if self._diagnostics:
             self._show_diagnostics(question, add_args)
 
-        if json.loads(self.response.text, strict=False)["answer"] == "no code":
+        try:
+            self.response = json.loads(self.response.text, strict=False)
+        except Exception as e:
+            print("Encountered error when parsing JSON")
+            print(e)
+            return
+
+        if self._save_plot:
+            pattern = r"fig\.show\([^)]*\)"
+            replacement = f"fig.write_image('./plots/{datetime.now().strftime('%d-%m-%Y_%H-%M-%S')}.png', engine='kaleido')"
+            self.response["answer"] = re.sub(
+                pattern, replacement, self.response["answer"]
+            )
+
+        if self.response["answer"] == "no code":
             return {"model": self.response}
 
         code_run = self._check_code()
@@ -152,7 +169,8 @@ class DfCodeAgent:
         try:
             output_capture = io.StringIO()
 
-            code = json.loads(self.response.text, strict=False)["answer"]
+            code = self.response["answer"]
+
             with redirect_stdout(output_capture):
                 exec(code, {"dff": self.dff})
 
@@ -189,6 +207,7 @@ class DfOaCodeAgent:
         df,
         api_key,
         model="gpt-4o-mini",
+        save_plot=False,
         keep_history=True,
         diagnostics=True,
         check_history=False,
@@ -201,11 +220,12 @@ class DfOaCodeAgent:
         self._diagnostics = diagnostics
         self._check_history = check_history
         self._keep_history = check_history | keep_history
+        self._save_plot = save_plot
         self.history = []
 
     def _create_client(self, api_key):
 
-        self.client = OpenAI(api_key=api_key)
+        self.code_client = OpenAI(api_key=api_key)
 
     def generate_content(self, question):
 
@@ -223,7 +243,7 @@ class DfOaCodeAgent:
 
         if self._check_history:
 
-            self.response = self.client.chat.completions.create(
+            self.response = self.code_client.chat.completions.create(
                 model=self.model,
                 temperature=1,
                 top_p=1,
@@ -238,7 +258,7 @@ class DfOaCodeAgent:
                 ],
             )
         else:
-            self.response = self.client.chat.completions.create(
+            self.response = self.code_client.chat.completions.create(
                 model=self.model,
                 temperature=1,
                 top_p=1,
@@ -257,10 +277,23 @@ class DfOaCodeAgent:
         if self._diagnostics:
             self._show_diagnostics(question, add_args)
 
-        if (
-            json.loads(self.response.choices[0].message.content, strict=False)["answer"]
-            == "no code"
-        ):
+        try:
+            self.response = json.loads(
+                self.response.choices[0].message.content, strict=False
+            )
+        except Exception as e:
+            print("Encountered error when parsing JSON")
+            print(e)
+            return
+
+        if self._save_plot:
+            pattern = r"fig\.show\([^)]*\)"
+            replacement = f"fig.write_image('./plots/{datetime.now().strftime('%d-%m-%Y_%H-%M-%S')}.png', engine='kaleido')"
+            self.response["answer"] = re.sub(
+                pattern, replacement, self.response["answer"]
+            )
+
+        if self.response["answer"] == "no code":
             return {"model": self.response}
 
         code_run = self._check_code()
@@ -272,9 +305,8 @@ class DfOaCodeAgent:
         try:
             output_capture = io.StringIO()
 
-            code = json.loads(self.response.choices[0].message.content, strict=False)[
-                "answer"
-            ]
+            code = self.response["answer"]
+
             with redirect_stdout(output_capture):
                 exec(code, {"dff": self.dff})
 

@@ -15,7 +15,7 @@ config.read(".config")
 def cycle_message(dff) -> None:
     """Create a cycle where the user asks a question and the program responds."""
 
-    cda = DfOaCodeAgent(dff, api_key=config["KEYS"]["O_API_KEY"])
+    cda = DfOaCodeAgent(dff, api_key=config["KEYS"]["O_API_KEY"], save_plot=True)
 
     try:
         while True:
@@ -25,20 +25,18 @@ def cycle_message(dff) -> None:
             # empty questions are not accepted
             if question == "" or question is None:
                 continue
-
             resp = cda.generate_content(question)
 
-            if resp.get("code_run"):
-                if resp["code_run"].get("output"):
-                    print(resp["code_run"]["output"])
-                else:
-                    print(resp["code_run"]["exception"])
+            print(resp)
+
+            if resp["model"]["answer"] == "no code":
+                print(resp["model"]["explanation"])
             else:
-                print(
-                    json.loads(resp["model"].choices[0].message.content, strict=False)[
-                        "explanation"
-                    ]
-                )
+                if resp.get("code_run"):
+                    if resp["code_run"].get("output") is not None:
+                        print(resp["code_run"]["output"])
+                    else:
+                        print(resp["code_run"]["exception"])
 
     except KeyboardInterrupt:
         print("\nBye bye!")
