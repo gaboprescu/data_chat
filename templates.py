@@ -72,41 +72,45 @@ indent_template = Template(
 )
 
 save_plot_template = Template(
-    """You receive a script in Python. The script is delimited by ####./n
+    """You receive a script in Python. The script is delimited by ####.
 
-    If the script contains code that creates and displays a plot, your job is to modify the script. 
-    Rather than displaying, save the plot using the next template as name: ./plots/<current_time>.png ./n
+    ## INSTRCTIONS:
+    - If the script contains code that creates and displays a plot, modify the script. 
+    - Replace the statement that display or shows the plot with a statement that saves the plot.
+    - Use the following template for the plot location: "./plots/<current_time>.png" .
+    - If the script does not contain code for creating a plot, do not make any changes to it.
 
-    If the script does not contain code for creating a plot, do not make any changes to it. /n
-
+    ## RESPONSE FORMAT:
     The response must be returned as a JSON with the next template:
     {"answer": <code>, "changed": "true" or "false", "is_plot": "true" or "false"} /n
 
-    Script:\n
-    ####
-    $script
-    ####
-
-    Use the next examples:\n
-    Example 1:\n
+    ## EXAMPLES:
+    <=== Start example
     Script: "import plotly.graph_objects as go
     fig = go.Figure(data=[go.Pie(labels=df_age['index'], values=df_age['age'], hole=0.3)])
-    fig.show()"\n
+    fig.show()"
+
     Response:
     {"answer": "import plotly.graph_objects as go
     from datetime import datetime
     fig = go.Figure(data=[go.Pie(labels=df_age['index'], values=df_age['age'], hole=0.3)])
     fig.write_image(f'./plots/{datetime.now().strftime("%d-%m-%Y_%H-%M-%S")}.png', engine='kaleido')",
     "changed": "true",
-    "is_plot": "true"}\n
+    "is_plot": "true"}
+    End example ===>
 
-    Example 2:\n
-    Script: "print('hello')"\n
+    <=== Start example:
+    Script: "print('hello')"
     Response:
     {"answer": "print('hello')",
     "changed": "false",
     "is_plot": "false"}
+    End Example ===>
 
+    Script:
+    ####
+    $script
+    ####
 """
 )
 

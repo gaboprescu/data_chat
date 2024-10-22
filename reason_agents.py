@@ -2,6 +2,7 @@ import io
 import re
 from datetime import datetime
 import json
+import pandas as pd
 from openai import OpenAI
 from contextlib import redirect_stdout
 from typing_extensions import TypedDict
@@ -171,8 +172,12 @@ class DfCodeAgent:
 
             code = self.response["answer"]
 
+            local_namespace = {"dff": self.dff}
+
             with redirect_stdout(output_capture):
-                exec(code, {"dff": self.dff})
+                exec(code, {"pd": pd}, local_namespace)
+
+            self.dff = local_namespace["dff"]
 
             captured_output = output_capture.getvalue()
             return {"output": captured_output}
@@ -212,7 +217,7 @@ class DfOaCodeAgent:
         diagnostics=True,
         check_history=False,
     ) -> None:
-        self.dff = df
+        self.dff = df.copy()
         # self.system_instruction = system_instruction
         self._create_client(api_key)
         self.model = model
@@ -307,8 +312,12 @@ class DfOaCodeAgent:
 
             code = self.response["answer"]
 
+            local_namespace = {"dff": self.dff}
+
             with redirect_stdout(output_capture):
-                exec(code, {"dff": self.dff})
+                exec(code, {"pd": pd}, local_namespace)
+
+            self.dff = local_namespace["dff"]
 
             captured_output = output_capture.getvalue()
             return {"output": captured_output}
