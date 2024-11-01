@@ -6,12 +6,12 @@ import pandas as pd
 from openai import OpenAI
 from contextlib import redirect_stdout
 from typing_extensions import TypedDict
-import configparser
 import google.generativeai as genai
 from functions import print_colored
-
-config = configparser.ConfigParser()
-config.read(".config")
+import pandas as pd
+import numpy as np
+import plotly.express as px
+import plotly.graph_objects as go
 
 
 class CodeResponse(TypedDict):
@@ -88,8 +88,8 @@ class DfCodeAgent:
         api_key,
         model="gemini-1.5-flash",
         save_plot=False,
-        keep_history=True,
-        diagnostics=True,
+        keep_history=False,
+        diagnostics=False,
         check_history=False,
     ) -> None:
         self.dff = df
@@ -175,7 +175,7 @@ class DfCodeAgent:
             local_namespace = {"dff": self.dff}
 
             with redirect_stdout(output_capture):
-                exec(code, {"pd": pd}, local_namespace)
+                exec(code, {"pd": pd, "np": np, "px": px, "go": go}, local_namespace)
 
             self.dff = local_namespace["dff"]
 
@@ -213,8 +213,8 @@ class DfOaCodeAgent:
         api_key,
         model="gpt-4o-mini",
         save_plot=False,
-        keep_history=True,
-        diagnostics=True,
+        keep_history=False,
+        diagnostics=False,
         check_history=False,
     ) -> None:
         self.dff = df.copy()
@@ -315,7 +315,7 @@ class DfOaCodeAgent:
             local_namespace = {"dff": self.dff}
 
             with redirect_stdout(output_capture):
-                exec(code, {"pd": pd}, local_namespace)
+                exec(code, {"pd": pd, "np": np, "px": px, "go": go}, local_namespace)
 
             self.dff = local_namespace["dff"]
 

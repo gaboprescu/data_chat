@@ -1,0 +1,27 @@
+[build-system]
+requires = ["setuptools >= 61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "data_chat"
+requires-python = ">=3.10"
+version = "1.0"
+dependencies = [
+    "google-generativeai==0.7.2",
+    "kaleido==0.1.0.post1",
+    "numpy==1.26.4",
+    "openai==1.34.0",
+    "pandas==2.2.2",
+    "plotly==5.22.0",
+    "streamlit==1.38.0"
+    "typing_extensions==4.12.2"
+]
+authors = [
+  {name = "Gabriel O", email = "gb_oprescu@yahoo.com"}
+]
+maintainers = [
+  {name = "Gabriel O", email = "gb_oprescu@yahoo.com"}
+]
+readme = "README.md"
+license = {text = "MIT License"}
+keywords = ["data analysis", "LLM", "OpenAI", "Gemini"]

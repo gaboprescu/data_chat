@@ -1,21 +1,19 @@
-import sys
-import json
-import configparser
-import pandas as pd
-import numpy as np
-import plotly.express as px
-import plotly.graph_objects as go
+from argparse import ArgumentParser
 from functions import read_table
 from reason_agents import DfOaCodeAgent
 
-config = configparser.ConfigParser()
-config.read(".config")
+parser = ArgumentParser(prog="Data Chat")
+parser.add_argument("filename", help="The path for CSV file")
+parser.add_argument("api_key", help="OpenAI api key")
+parser.add_argument("-m", "--model", help="Default is gpt-4o-mini")
+args = parser.parse_args()
 
 
 def cycle_message(dff) -> None:
     """Create a cycle where the user asks a question and the program responds."""
 
-    cda = DfOaCodeAgent(dff, api_key=config["KEYS"]["O_API_KEY"], save_plot=True)
+    cda = DfOaCodeAgent(dff, api_key=args.api_key)
+    
 
     try:
         while True:
@@ -27,7 +25,7 @@ def cycle_message(dff) -> None:
                 continue
             resp = cda.generate_content(question)
 
-            print(resp)
+            # print(resp)
 
             if resp["model"]["answer"] == "no code":
                 print(resp["model"]["explanation"])
@@ -44,7 +42,7 @@ def cycle_message(dff) -> None:
 
 def main():
     # create data
-    dff = read_table(sys.argv[1])
+    dff = read_table(args.filename)
     cycle_message(dff)
 
 
