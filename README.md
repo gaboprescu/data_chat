@@ -9,10 +9,15 @@ And most importat, the data frame is NOT sent to the LLM.
 ## Starting point
 
 Copy all the files to a new folder.
+
 Open CMD in that folder.
+
 Create a new Python environment: `python -m venv data_chat_venv`
+
 Activate the environment:  `data_chat_venv\Scripts\activate`
+
 Install the mandatory libraries: `pip install -r requirements.txt`
+
 Run the command `python processor.py <path_to_csv> <openai_api_key>`
 
 If you do not have a CSV file use the one in the project: `data\student-perf.CSV`.
