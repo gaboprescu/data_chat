@@ -91,3 +91,15 @@ def check_api_key(api_key: str, which: Literal["openai", "gemini"]) -> str:
 
     else:
         return "For 'which' arguments chose openai or gemini"
+
+
+def process_json(jsn):
+
+    jsn = str(jsn)
+
+    jsn = re.sub("```\s{0,}json", "", jsn)
+    jsn = re.sub("```", "", jsn)
+    jsn = re.sub("^\(", "", jsn)
+    jsn = re.sub("\)$", "", jsn)
+
+    return jsn

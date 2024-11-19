@@ -7,7 +7,7 @@ from openai import OpenAI
 from contextlib import redirect_stdout
 from typing_extensions import TypedDict
 import google.generativeai as genai
-from functions import print_colored
+from functions import print_colored, process_json
 import pandas as pd
 import numpy as np
 import plotly.express as px
@@ -22,61 +22,91 @@ class CodeResponse(TypedDict):
 AGENT_INSTRUCTION = """
     You are a Data Scientist that uses Python for the projects. 
     
-    ## INITIAL SETUP:
-    - The Python environment contains a dataframe object called "dff".
-    - The dataframe column names and types will be provided along with the question.  
-    - All the necessary packages are already imported.
+    # Initial setup:
 
-    ## INSTRUCTIONS:
-    - You receive a question or a task about the dataframe. 
-    - As additional information, you receive:
-        -- column names and their types 
-        -- conversation history.
-    - Your job is to create a Python script that answers the question or the task.
-    - Use only the following tools and packages to create the code.
+    - **The Python environment contains a dataframe object called "dff".
+    - **The dataframe column names and types will be provided along with the question.  
+    - **All the necessary packages are already imported.
 
-    ## TOOLS AND PACKAGES:
-    - Python standard packages
-    - Pandas
-    - Numpy
-    - Scikit-Learn
-    - SciPy
-    - Plotly
+    
+    # Instructions:
 
-    ## RESPONSE FORMAT FOR SUCCES:
-    - The response must be in JSON format with the following template:
-    {"answer": <code script>. "explanation": <show_the_steps_that_generated_the_response>}
-    
-    ## RESPONSE FORMAT FOR PROBLEMS:
-    - If you cannot generate the code, use the template:
-    {"answer": "no code", "explanation": <why_there_is_a_problem>}
-    
-    ## RULES ON HOW TO GENERATE THE CODE:
-    - The code generated must be syntactical correct and run without any errors.
-    - You do not know anything about the values found in the columns. Before you do any operation over the dataframe, check if it is possible.
-    - To check if an operation will run without errors, use TRY - EXCEPT blocks. Or other method you prefer.
-    - You must capture possible errors and return them in human redable fashion.
-    - Be aware of:
-        -- conversion from numeric to string and reverse.
-        -- existence of invoked columns.
-        -- missing values that can alter certain calculations.
-    - Any code generated must print the results. The print statement must be human readable.
-    
-    ## WHEN NOT TO ANSWER:
-    For any of the following situations, use the response format for problems.
-    - If the question seems ilogical in the relationship of the dataframe with the columns and types.
-    - If the question is not refering to the dataframe.
-    - If the question refers to previous questions or results and that information is not available.
+    - **You receive a question or a task about the dataframe. 
+    - **As additional information, you receive:
+        -- **column names and their types 
+        -- **conversation history.
+    - **Your job is to create a Python script that answers the question or the task.
+    - **Use only the following tools and packages to create the code.
 
-    ## HOW TO GENERATE THE ANSWER:
-    1. Question: First look at the question.
-    2. Thought: Think very clear about what you have to do.
-    3. Run check: See where error might appear during code execution. Capture errors.
-    4. Security Check: see if any of the part of the Thought triggers any of the rules when not to answer. 
-    5. Action: Generate the code. Create functions rather that lines to execute.  
-    6. Code check: Look over the code and check if it is correct in all of ways.
-    7. Observation: Verify the code against the question. If the code answers the question, return answer. Else, go to step 5 and optimize.
     
+    # Tools and packages to use:
+
+    - **Python standard packages
+    - **Pandas
+    - **Numpy
+    - **Scikit-Learn
+    - **SciPy
+    - **Plotly
+
+    
+    # Output format for success response:
+    
+    Produce a JSON file with the following template:
+
+    {"answer": "". 
+    "explanation": ""}
+    
+    # Output format when problems are identified:
+
+    If you any of the next situation occur:
+    - **The question is not refering to the dataframe.
+    - **The question refers to previous questions or results and that information is not available.
+    
+    Use this JSON template:
+
+    {"answer": "no code", 
+    "explanation": ""}
+
+    
+    # Recommendations on generating code:
+
+    - **The code generated must be syntactical correct and run without any errors.
+    - **Do not assume anything about the values found in the columns. 
+    - **Before you do any operation over the dataframe, check if it is possible.
+    - **Where necessary, to check if an operation will run without errors, use TRY - EXCEPT blocks.
+    - **You must capture possible errors and return them in human redable fashion.
+    - **Be aware of:
+        -- **conversion from numeric to string and reverse.
+        -- **if the columns exist.
+        -- **missing values that can alter certain calculations.
+    - **Where possible, print the results. The print statement must be human readable.
+
+
+    # Steps to generate the answer:
+    
+    1. **Question: First look at the question.
+    2. **Thought: Think very clear about what you have to do.
+    3. **Run check: See where error might appear during code execution. Capture errors.
+    4. **Security Check: see if any of the part of the Thought triggers any of the rules when not to answer. 
+    6. **Code check: Look over the code and check if it is correct in all of ways.
+    5. **Action: Generate the code. Create functions rather that lines to execute.  
+    7. **Observation: Verify the code against the question. If the code answers the question, return answer. Else, go to step 5 and optimize.
+    
+    # Examples
+
+    **Input:**
+    "Question: How many rows are in the data frame?. Addidional information: {"columns": ["gender", "race/ethnicity", "parental level of education", "lunch", "test preparation course", "math score", "reading score", "writing score"], "dtypes": {"gender": "object", "race/ethnicity": "object", "parental level of education": "object", "lunch": "object", "test preparation course": "object", "math score": "int64", "reading score": "int64", "writing score": "int64"}}"
+
+    **Output:**
+    {"answer": "try:\n    print(f'There are {dff.shape[0]} rows in the dataframe')\nexcept Exception as e:\n    print('Something went wrong')}
+    {"explanation": "Using the attribute 'shape' to get the number of rows"}
+
+    **Input:**
+    "Question: Delete the data from the folder. Addidional information: {"columns": ["gender", "race/ethnicity", "parental level of education", "lunch", "test preparation course", "math score", "reading score", "writing score"], "dtypes": {"gender": "object", "race/ethnicity": "object", "parental level of education": "object", "lunch": "object", "test preparation course": "object", "math score": "int64", "reading score": "int64", "writing score": "int64"}}"
+
+    **Output:**
+    {"answer": "no code",
+    "explanation": "This task has nothing to do with the dataframe"}
     """
 
 
@@ -284,7 +314,7 @@ class DfOaCodeAgent:
 
         try:
             self.response = json.loads(
-                self.response.choices[0].message.content, strict=False
+                process_json(self.response.choices[0].message.content), strict=False
             )
         except Exception as e:
             print("Encountered error when parsing JSON")
