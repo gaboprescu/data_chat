@@ -92,7 +92,11 @@ if st.session_state.key_resp == "valid_key":
     if st.session_state.df is not None:
         if select_llm == "openai":
             cda = DfOaCodeAgent(
-                st.session_state.df, api_key=st.session_state.widget, save_plot=True
+                st.session_state.df,
+                api_key=st.session_state.widget,
+                save_plot=True,
+                model="gpt-4o",
+                diagnostics=True,
             )
         if select_llm == "gemini":
             cda = DfCodeAgent(
@@ -109,7 +113,7 @@ for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         if message["type"] == "text":
             if message.get("content"):
-                st.text(message["content"])
+                st.markdown(message["content"])
             if message.get("code_output"):
                 st.text(message["code_output"])
             if message.get("code"):
@@ -178,7 +182,7 @@ if prompt := st.chat_input(
                             "content": resp["model"]["explanation"],
                         }
                     )
-                    st.text(resp["model"]["explanation"])
+                    st.markdown(resp["model"]["explanation"])
                     # st.code(resp["answer"])
                 else:
 
