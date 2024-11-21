@@ -95,13 +95,13 @@ if st.session_state.key_resp == "valid_key":
             cda = DfOaCodeAgent(
                 st.session_state.df,
                 api_key=st.session_state.widget,
-                save_plot=True,
+                save_plot=False,
                 model="gpt-4o",
                 diagnostics=True,
             )
         if select_llm == "gemini":
             cda = DfCodeAgent(
-                st.session_state.df, api_key=st.session_state.widget, save_plot=True
+                st.session_state.df, api_key=st.session_state.widget, save_plot=False
             )
 
 
