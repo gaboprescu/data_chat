@@ -8,6 +8,7 @@ import plotly.io as pio
 import numpy as np
 import plotly.express as px
 import plotly.graph_objects as go
+import matplotlib.pyplot as plt
 import streamlit as st
 from reason_agents import DfCodeAgent, DfOaCodeAgent
 from functions import check_api_key
@@ -144,18 +145,18 @@ if prompt := st.chat_input(
         # take question from user
         question = prompt
 
-        plot_start = len(os.listdir("./plots"))
+        plot_start = len(os.listdir("./app/plots"))
         try:
             # get the response from LLM
             resp = cda.generate_content(question)
 
-            plot_stop = len(os.listdir("./plots"))
+            plot_stop = len(os.listdir("./app/plots"))
 
             if plot_stop > plot_start:
 
                 plot_start = plot_stop
 
-                path = sorted(Path("plots").glob("*.png"))[-1]
+                path = sorted(Path("./app/plots").glob("*.png"))[-1]
 
                 st.session_state.messages.append(
                     {

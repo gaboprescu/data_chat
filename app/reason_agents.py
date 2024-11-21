@@ -1,5 +1,6 @@
 import io
 import re
+import sys
 from datetime import datetime
 import json
 import pandas as pd
@@ -7,11 +8,14 @@ from openai import OpenAI
 from contextlib import redirect_stdout
 from typing_extensions import TypedDict
 import google.generativeai as genai
-from functions import print_colored, process_json
 import pandas as pd
 import numpy as np
 import plotly.express as px
 import plotly.graph_objects as go
+import matplotlib.pyplot as plt
+
+# sys.path.insert(0, "./app")
+from functions import print_colored, process_json
 
 
 class CodeResponse(TypedDict):
@@ -184,7 +188,7 @@ class DfCodeAgent:
 
         if self._save_plot:
             pattern = r"fig\.show\([^)]*\)"
-            replacement = f"fig.write_image('./plots/{datetime.now().strftime('%d-%m-%Y_%H-%M-%S')}.png', engine='kaleido')"
+            replacement = f"fig.write_image('./app/plots/{datetime.now().strftime('%d-%m-%Y_%H-%M-%S')}.png', engine='kaleido')"
             self.response["answer"] = re.sub(
                 pattern, replacement, self.response["answer"]
             )
@@ -205,7 +209,11 @@ class DfCodeAgent:
             local_namespace = {"dff": self.dff}
 
             with redirect_stdout(output_capture):
-                exec(code, {"pd": pd, "np": np, "px": px, "go": go}, local_namespace)
+                exec(
+                    code,
+                    {"pd": pd, "np": np, "px": px, "go": go, "plt": plt},
+                    local_namespace,
+                )
 
             self.dff = local_namespace["dff"]
 
@@ -323,7 +331,7 @@ class DfOaCodeAgent:
 
         if self._save_plot:
             pattern = r"fig\.show\([^)]*\)"
-            replacement = f"fig.write_image('./plots/{datetime.now().strftime('%d-%m-%Y_%H-%M-%S')}.png', engine='kaleido')"
+            replacement = f"fig.write_image('./app/plots/{datetime.now().strftime('%d-%m-%Y_%H-%M-%S')}.png', engine='kaleido')"
             self.response["answer"] = re.sub(
                 pattern, replacement, self.response["answer"]
             )
@@ -345,7 +353,11 @@ class DfOaCodeAgent:
             local_namespace = {"dff": self.dff}
 
             with redirect_stdout(output_capture):
-                exec(code, {"pd": pd, "np": np, "px": px, "go": go}, local_namespace)
+                exec(
+                    code,
+                    {"pd": pd, "np": np, "px": px, "go": go, "plt": plt},
+                    local_namespace,
+                )
 
             self.dff = local_namespace["dff"]
 
