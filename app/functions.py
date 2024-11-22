@@ -103,3 +103,31 @@ def process_json(jsn):
     jsn = re.sub("\)$", "", jsn)
 
     return jsn
+
+
+def replace_figure(text):
+
+    main_pattern = r"fig\.show\([^)]*\)"
+    with_space_pattern = r"[ ]{0,}fig\.show\([^)]*\)"
+    space_pattern = r"[ ]{0,}"
+
+    sp = re.search(with_space_pattern, text)
+
+    if sp is None:
+        return text
+
+    sp = sp.span()
+    short_text = text[sp[0] : sp[1]]
+
+    sp = re.search(space_pattern, short_text).span()
+    space = short_text[sp[0] : sp[1]]
+
+    replacement = (
+        "with open('./app/plots/temp_fig.json', 'w') as f:\n"
+        + space
+        + "        f.write(fig.to_json(pretty=True))"
+    )
+
+    text = re.sub(main_pattern, replacement, text)
+
+    return text

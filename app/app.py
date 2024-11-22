@@ -15,6 +15,8 @@ from functions import check_api_key
 
 # otherwise black and white plots are displayed
 pio.templates.default = "plotly"
+PLOT = "temp_fig.json"
+PLOT_DIR = "./app/plots"
 
 # for checking the api key, set session variables
 if "api_key" not in st.session_state:
@@ -95,13 +97,13 @@ if st.session_state.key_resp == "valid_key":
             cda = DfOaCodeAgent(
                 st.session_state.df,
                 api_key=st.session_state.widget,
-                save_plot=False,
+                save_plot=True,
                 model="gpt-4o",
                 diagnostics=True,
             )
         if select_llm == "gemini":
             cda = DfCodeAgent(
-                st.session_state.df, api_key=st.session_state.widget, save_plot=False
+                st.session_state.df, api_key=st.session_state.widget, save_plot=True
             )
 
 
@@ -122,7 +124,7 @@ for message in st.session_state.messages:
             if message.get("explanation"):
                 st.markdown(message.get("explanation"))
         else:
-            st.image(message["content"])  # display image
+            # st.image(message["content"])  # display image
             if message.get("code"):
                 st.code(message.get("code"))
 
@@ -145,30 +147,38 @@ if prompt := st.chat_input(
         # take question from user
         question = prompt
 
+        if PLOT in os.listdir(PLOT_DIR):
+            os.remove(Path(PLOT_DIR, PLOT))
+
         plot_start = len(os.listdir("./app/plots"))
         try:
             # get the response from LLM
+            # breakpoint()
             resp = cda.generate_content(question)
-
             plot_stop = len(os.listdir("./app/plots"))
 
-            if plot_stop > plot_start:
+            # if plot_stop > plot_start:
+            if PLOT in os.listdir(PLOT_DIR):
 
-                plot_start = plot_stop
+                # plot_start = plot_stop
 
-                path = sorted(Path("./app/plots").glob("*.png"))[-1]
+                # path = sorted(Path("./app/plots").glob("*.png"))[-1]
 
                 st.session_state.messages.append(
                     {
                         "role": "assistant",
-                        "content": str(path),
+                        # "content": str(path),
                         "type": "plot",
                         "code": resp["model"]["answer"],
                     }
                 )
                 # show the code and plot now
+                # path = list(Path("./app/plots").glob("*.json"))[0]
 
-                st.image(str(path))
+                with open(Path(PLOT_DIR, PLOT), "r") as f:
+                    dct_plot = json.load(f)
+
+                st.plotly_chart(dct_plot)
 
                 st.code(resp["answer"])
 

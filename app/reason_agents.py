@@ -15,7 +15,7 @@ import plotly.graph_objects as go
 import matplotlib.pyplot as plt
 
 # sys.path.insert(0, "./app")
-from functions import print_colored, process_json
+from functions import print_colored, process_json, replace_figure
 
 
 class CodeResponse(TypedDict):
@@ -330,11 +330,13 @@ class DfOaCodeAgent:
             return
 
         if self._save_plot:
-            pattern = r"fig\.show\([^)]*\)"
-            replacement = f"fig.write_image('./app/plots/{datetime.now().strftime('%d-%m-%Y_%H-%M-%S')}.png', engine='kaleido')"
-            self.response["answer"] = re.sub(
-                pattern, replacement, self.response["answer"]
-            )
+            # pattern = r"fig\.show\([^)]*\)"
+            # # replacement = f"fig.write_image('./app/plots/{datetime.now().strftime('%d-%m-%Y_%H-%M-%S')}.png', engine='kaleido')"
+            # replacement = "with open('./app/plots/temp_fig.json', 'w') as f:\n        f.write(fig.to_json(pretty=True))"
+            # self.response["answer"] = re.sub(
+            #     pattern, replacement, self.response["answer"]
+            # )
+            self.response["answer"] = replace_figure(self.response["answer"])
 
         if self.response["answer"] == "no code":
             return {"model": self.response}
