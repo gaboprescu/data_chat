@@ -16,7 +16,7 @@ def print_colored(text, color, end="\n"):
         "blue": "\x1b[34m",
     }
     reset = "\x1b[0m"
-    sys.stdout.write(colors.get(color, "") + text + reset + end)
+    print(colors.get(color, "") + text + reset + end)
 
 
 def clean_dict(x: dict) -> dict:

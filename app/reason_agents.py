@@ -13,6 +13,7 @@ import numpy as np
 import plotly.express as px
 import plotly.graph_objects as go
 import matplotlib.pyplot as plt
+from wordcloud import WordCloud
 
 # sys.path.insert(0, "./app")
 from functions import print_colored, process_json, replace_figure
@@ -51,14 +52,15 @@ AGENT_INSTRUCTION = """
     - **Scikit-Learn
     - **SciPy
     - **Plotly
+    - **Wordcloud
 
     
     # Output format for success response:
     
-    Produce a JSON file with the following template:
+    Produce a response with the following template:
 
-    {"answer": "". 
-    "explanation": ""}
+    {"answer": <the_valid_python_code>. 
+    "explanation": <a_few_details_on_how_the_response_generated>}
     
     # Output format when problems are identified:
 
@@ -66,10 +68,10 @@ AGENT_INSTRUCTION = """
     - **The question is not refering to the dataframe.
     - **The question refers to previous questions or results and that information is not available.
     
-    Use this JSON template:
+    Use this template:
 
     {"answer": "no code", 
-    "explanation": ""}
+    "explanation": <a_few_details_on_how_the_response_generated>}
 
     
     # Recommendations on generating code:
@@ -211,7 +213,14 @@ class DfCodeAgent:
             with redirect_stdout(output_capture):
                 exec(
                     code,
-                    {"pd": pd, "np": np, "px": px, "go": go, "plt": plt},
+                    {
+                        "pd": pd,
+                        "np": np,
+                        "px": px,
+                        "go": go,
+                        "plt": plt,
+                        "WordCloud": WordCloud,
+                    },
                     local_namespace,
                 )
 
@@ -249,7 +258,7 @@ class DfOaCodeAgent:
         self,
         df,
         api_key,
-        model="gpt-4o-mini",
+        model="gpt-4o",
         save_plot=False,
         keep_history=False,
         diagnostics=False,
@@ -357,7 +366,14 @@ class DfOaCodeAgent:
             with redirect_stdout(output_capture):
                 exec(
                     code,
-                    {"pd": pd, "np": np, "px": px, "go": go, "plt": plt},
+                    {
+                        "pd": pd,
+                        "np": np,
+                        "px": px,
+                        "go": go,
+                        "plt": plt,
+                        "WordCloud": WordCloud,
+                    },
                     local_namespace,
                 )
 
