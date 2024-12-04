@@ -99,6 +99,7 @@ def process_json(jsn):
 
     jsn = re.sub("```\s{0,}json", "", jsn)
     jsn = re.sub("```", "", jsn)
+    jsn = re.sub('"{3}', '"', jsn)
     jsn = re.sub("^\(", "", jsn)
     jsn = re.sub("\)$", "", jsn)
 
