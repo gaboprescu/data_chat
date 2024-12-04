@@ -1,4 +1,5 @@
 import re
+import regex
 import sys
 import inspect
 from typing import Literal
@@ -102,6 +103,11 @@ def process_json(jsn):
     jsn = re.sub('"{3}', '"', jsn)
     jsn = re.sub("^\(", "", jsn)
     jsn = re.sub("\)$", "", jsn)
+    jsn = regex.sub(
+        r"""(?<!\{\s*|\s*:\s*|(a-z)\s*,\s*|"\s*,\s*)"\s*(?!\s*\}|\s*:\s*|\s*,\s*)""",
+        "'",
+        jsn,
+    )
 
     return jsn
 
