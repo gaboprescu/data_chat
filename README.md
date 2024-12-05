@@ -18,7 +18,7 @@ Activate the environment:  `data_chat_venv\Scripts\activate`
 
 Install the mandatory libraries: `pip install -r requirements.txt`
 
-Run the command `python processor.py <path_to_csv> <openai_api_key>`
+Run the command `python ./app/processor.py <path_to_csv> <openai_api_key>`
 
 If you do not have a CSV file use the one in the project: `data\student-perf.CSV`.
 
