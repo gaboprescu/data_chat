@@ -78,6 +78,7 @@ AGENT_INSTRUCTION = """
 
     - **The code generated must be syntactical correct and run without any errors.
     - **Do not assume anything about the values found in the columns. 
+    - **Do not use double quotes inside the keys or the values of the response. Otherwise it cannot be parsed as JSON.
     - **Before you do any operation over the dataframe, check if it is possible.
     - **Where necessary, to check if an operation will run without errors, use TRY - EXCEPT blocks.
     - **You must capture possible errors and return them in human redable fashion.
