@@ -38,6 +38,8 @@ AGENT_INSTRUCTION = """
 
     - **You receive a question or a task about the dataframe. 
     - **As additional information, you receive:
+        -- **description of the table
+        -- **description of the columns
         -- **column names and their types 
         -- **conversation history.
     - **Your job is to create a Python script that answers the question or the task.
@@ -280,7 +282,7 @@ class DfOaCodeAgent:
 
         self.code_client = OpenAI(api_key=api_key)
 
-    def generate_content(self, question):
+    def generate_content(self, question, tbl_desc=None, col_desc=None):
 
         question_with_args = """Question: {}. Additional information: {}"""
         question_with_hist = (
@@ -291,6 +293,8 @@ class DfOaCodeAgent:
             {
                 "columns": self.dff.columns.to_list(),
                 "dtypes": self.dff.dtypes.apply(lambda x: str(x)).to_dict(),
+                "table_description": tbl_desc,
+                "columns_description": col_desc,
             }
         )
 

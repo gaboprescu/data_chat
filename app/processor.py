@@ -15,6 +15,10 @@ def cycle_message(dff) -> None:
 
     cda = DfOaCodeAgent(dff, api_key=args.api_key, diagnostics=True)
 
+    tbl_desc = input(
+        "\nGive a description of table, what it represents and what is inside:\n"
+    )
+
     try:
         while True:
 
@@ -23,7 +27,7 @@ def cycle_message(dff) -> None:
             # empty questions are not accepted
             if question == "" or question is None:
                 continue
-            resp = cda.generate_content(question)
+            resp = cda.generate_content(question, tbl_desc)
 
             # print(resp)
             # breakpoint()
