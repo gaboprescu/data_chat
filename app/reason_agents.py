@@ -24,6 +24,108 @@ class CodeResponse(TypedDict):
     explanation: str
 
 
+AGENT_INFER = """
+
+# Initial setup
+You receive:
+- **The description of the table or dataframe.
+- **The list of column names.
+- **The types of the columns.
+
+# Your job
+Generate a descriptive interpretation of the list of column names.
+Also look for possibble missmatch between the column name and the column type.
+
+Consider the common meanings and uses for each column name, along with potential related data types or contents. Use your knowledge to infer plausible data descriptions that would align with typical usage in databases or datasets.
+
+# Steps
+
+1. **Analyze Column Names**: For each column name, break it down to understand its components and context.
+2. **Infer Possible Descriptions**: Based on common terminology, suggest what type of data or information the column might contain.
+3. **Synthesize Descriptions**: Formulate a clear and concise description for each column, reflecting possible real-world uses.
+4. **Output**: Compile the descriptions into a coherent response.
+
+# Output Format
+
+Provide a description for each column in a bulleted list format. Each description should be a complete sentence briefly explaining the potential content or purpose of the column.
+
+# Example
+
+Input:
+{
+    "table_description": "The table contains information about the users and their transactions in the shop",
+    "column_names": ["user_id","transaction_date", "product_cost"],
+    "column_types": {"user_id": "object", "transaction_date": "object", "product_cost": "object"}
+ }
+
+Output:
+{
+    "column_description": {
+        "user_id": "A unique identifier assigned to each user in the database, typically a string or integer.",
+        "transaction_date": "The specific date when a transaction occurred, generally formatted as a date type.",
+        "product_cost": "Represents the monetary cost of each product, usually stored as a decimal or float value".
+    },
+    "suggestions": "Column 'product_cost' should be of type numeric"    
+}
+
+# Notes
+
+- If a column name is ambiguous, provide the most logical description based on common data practices.
+- If the column names indicate time or sequencing, mention their typical data formats.
+- If the column names seems to be a random string, point that out.
+"""
+
+
+class InferColsAgent:
+    def __init__(self, df, api_key, model="gpt-4o", show_diagnostics=True):
+        self.cols = df.columns.to_list()
+        self.col_types = df.dtypes.apply(lambda x: str(x)).to_dict()
+        self._create_client(api_key)
+        self._model = model
+        self.show_diagnostics = show_diagnostics
+
+    def _create_client(self, api_key):
+
+        self._info_client = OpenAI(api_key=api_key)
+
+    def infer_cols(self, tbl_desc=None):
+
+        msg = {
+            "table_description": tbl_desc,
+            "column_names": self.cols,
+            "column_types": self.col_types,
+        }
+
+        msg = json.dumps(msg)
+
+        try:
+            self.response = self._info_client.chat.completions.create(
+                model=self._model,
+                temperature=1,
+                top_p=1,
+                messages=[
+                    {"role": "system", "content": AGENT_INFER},
+                    {"role": "user", "content": msg},
+                ],
+            )
+
+            self.response = json.loads(
+                self.response.choices[0].message.content, strict=False
+            )
+
+            if self.show_diagnostics:
+                print_colored(self.response, color="yellow")
+
+            return self.response
+
+        except Exception as e:
+            print(e)
+            print(
+                """The agent who infers the column description encountered the error above.
+                You can continue as is, or restart to be able to pass more info."""
+            )
+
+
 AGENT_INSTRUCTION = """
     You are a Data Scientist that uses Python for the projects. 
     

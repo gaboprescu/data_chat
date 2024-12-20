@@ -1,6 +1,7 @@
 import re
 import sys
 import inspect
+from pprint import pformat
 from typing import Literal
 from pathlib import Path
 import pandas as pd
@@ -16,6 +17,7 @@ def print_colored(text, color, end="\n"):
         "blue": "\x1b[34m",
     }
     reset = "\x1b[0m"
+    text = pformat(text)
     print(colors.get(color, "") + text + reset + end)
 
 
