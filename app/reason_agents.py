@@ -24,108 +24,6 @@ class CodeResponse(TypedDict):
     explanation: str
 
 
-AGENT_INFER = """
-
-# Initial setup
-You receive:
-- **The description of the table or dataframe.
-- **The list of column names.
-- **The types of the columns.
-
-# Your job
-Generate a descriptive interpretation of the list of column names.
-Also look for possibble missmatch between the column name and the column type.
-
-Consider the common meanings and uses for each column name, along with potential related data types or contents. Use your knowledge to infer plausible data descriptions that would align with typical usage in databases or datasets.
-
-# Steps
-
-1. **Analyze Column Names**: For each column name, break it down to understand its components and context.
-2. **Infer Possible Descriptions**: Based on common terminology, suggest what type of data or information the column might contain.
-3. **Synthesize Descriptions**: Formulate a clear and concise description for each column, reflecting possible real-world uses.
-4. **Output**: Compile the descriptions into a coherent response.
-
-# Output Format
-
-Provide a description for each column in a bulleted list format. Each description should be a complete sentence briefly explaining the potential content or purpose of the column.
-
-# Example
-
-Input:
-{
-    "table_description": "The table contains information about the users and their transactions in the shop",
-    "column_names": ["user_id","transaction_date", "product_cost"],
-    "column_types": {"user_id": "object", "transaction_date": "object", "product_cost": "object"}
- }
-
-Output:
-{
-    "column_description": {
-        "user_id": "A unique identifier assigned to each user in the database, typically a string or integer.",
-        "transaction_date": "The specific date when a transaction occurred, generally formatted as a date type.",
-        "product_cost": "Represents the monetary cost of each product, usually stored as a decimal or float value".
-    },
-    "suggestions": "Column 'product_cost' should be of type numeric"    
-}
-
-# Notes
-
-- If a column name is ambiguous, provide the most logical description based on common data practices.
-- If the column names indicate time or sequencing, mention their typical data formats.
-- If the column names seems to be a random string, point that out.
-"""
-
-
-class InferColsAgent:
-    def __init__(self, df, api_key, model="gpt-4o", show_diagnostics=True):
-        self.cols = df.columns.to_list()
-        self.col_types = df.dtypes.apply(lambda x: str(x)).to_dict()
-        self._create_client(api_key)
-        self._model = model
-        self.show_diagnostics = show_diagnostics
-
-    def _create_client(self, api_key):
-
-        self._info_client = OpenAI(api_key=api_key)
-
-    def infer_cols(self, tbl_desc=None):
-
-        msg = {
-            "table_description": tbl_desc,
-            "column_names": self.cols,
-            "column_types": self.col_types,
-        }
-
-        msg = json.dumps(msg)
-
-        try:
-            self.response = self._info_client.chat.completions.create(
-                model=self._model,
-                temperature=1,
-                top_p=1,
-                messages=[
-                    {"role": "system", "content": AGENT_INFER},
-                    {"role": "user", "content": msg},
-                ],
-            )
-
-            self.response = json.loads(
-                self.response.choices[0].message.content, strict=False
-            )
-
-            if self.show_diagnostics:
-                print_colored(self.response, color="yellow")
-
-            return self.response
-
-        except Exception as e:
-            print(e)
-            print(
-                """The agent who infers the column description encountered the error above.
-                You can continue as is, or restart to be able to pass more info."""
-            )
-
-
 AGENT_INSTRUCTION = """
     You are a Data Scientist that uses Python for the projects. 
     
@@ -223,6 +121,8 @@ AGENT_INSTRUCTION = """
 
 class DfCodeAgent:
 
+    AGENT_INSTRUCTION = AGENT_INSTRUCTION
+
     def __init__(
         self,
         df,
@@ -234,7 +134,7 @@ class DfCodeAgent:
         check_history=False,
     ) -> None:
         self.dff = df
-        self.system_instruction = AGENT_INSTRUCTION
+        # self.system_instruction = AGENT_INSTRUCTION
         self.model = model
         self._create_client(api_key)
         self._diagnostics = diagnostics
@@ -252,7 +152,7 @@ class DfCodeAgent:
             generation_config=genai.GenerationConfig(
                 response_mime_type="application/json", response_schema=CodeResponse
             ),
-            system_instruction=self.system_instruction,
+            system_instruction=self.AGENT_INSTRUCTION,
         )
 
     def generate_content(self, question):
@@ -359,6 +259,8 @@ class DfCodeAgent:
 
 class DfOaCodeAgent:
 
+    AGENT_INSTRUCTION = AGENT_INSTRUCTION
+
     def __init__(
         self,
         df,
@@ -373,7 +275,7 @@ class DfOaCodeAgent:
         # self.system_instruction = system_instruction
         self._create_client(api_key)
         self.model = model
-        self.system_instruction = AGENT_INSTRUCTION
+        # self.system_instruction = AGENT_INSTRUCTION
         self._diagnostics = diagnostics
         self._check_history = check_history
         self._keep_history = check_history | keep_history
@@ -407,7 +309,7 @@ class DfOaCodeAgent:
                 temperature=1,
                 top_p=1,
                 messages=[
-                    {"role": "system", "content": self.system_instruction},
+                    {"role": "system", "content": self.AGENT_INSTRUCTION},
                     {
                         "role": "user",
                         "content": question_with_hist.format(
@@ -422,7 +324,7 @@ class DfOaCodeAgent:
                 temperature=1,
                 top_p=1,
                 messages=[
-                    {"role": "system", "content": self.system_instruction},
+                    {"role": "system", "content": self.AGENT_INSTRUCTION},
                     {
                         "role": "user",
                         "content": question_with_args.format(question, add_args),
@@ -514,3 +416,214 @@ class DfOaCodeAgent:
         print_colored(
             "\nResponse\n" + self.response.choices[0].message.content, color="green"
         )
+
+
+AGENT_INFER = """
+
+# Initial setup
+You receive:
+- **The description of the table or dataframe.
+- **The list of column names.
+- **The types of the columns.
+
+# Your job
+Generate a descriptive interpretation of the list of column names.
+Also look for possibble missmatch between the column name and the column type.
+
+Consider the common meanings and uses for each column name, along with potential related data types or contents. Use your knowledge to infer plausible data descriptions that would align with typical usage in databases or datasets.
+
+# Steps
+
+1. **Analyze Column Names**: For each column name, break it down to understand its components and context.
+2. **Infer Possible Descriptions**: Based on common terminology, suggest what type of data or information the column might contain.
+3. **Synthesize Descriptions**: Formulate a clear and concise description for each column, reflecting possible real-world uses.
+4. **Output**: Compile the descriptions into a coherent response.
+
+# Output Format
+
+Provide a description for each column in a bulleted list format. Each description should be a complete sentence briefly explaining the potential content or purpose of the column.
+
+# Example
+
+Input:
+{
+    "table_description": "The table contains information about the users and their transactions in the shop",
+    "column_names": ["user_id","transaction_date", "product_cost"],
+    "column_types": {"user_id": "object", "transaction_date": "object", "product_cost": "object"}
+ }
+
+Output:
+{
+    "column_description": {
+        "user_id": "A unique identifier assigned to each user in the database, typically a string or integer.",
+        "transaction_date": "The specific date when a transaction occurred, generally formatted as a date type.",
+        "product_cost": "Represents the monetary cost of each product, usually stored as a decimal or float value".
+    },
+    "suggestions": "Column 'product_cost' should be of type numeric"    
+}
+
+# Notes
+
+- If a column name is ambiguous, provide the most logical description based on common data practices.
+- If the column names indicate time or sequencing, mention their typical data formats.
+- If the column names seems to be a random string, point that out.
+"""
+
+
+class InferColsAgent:
+
+    AGENT_INFER = AGENT_INFER
+
+    def __init__(self, df, api_key, model="gpt-4o", show_diagnostics=True):
+        self.cols = df.columns.to_list()
+        self.col_types = df.dtypes.apply(lambda x: str(x)).to_dict()
+        self._create_client(api_key)
+        self._model = model
+        self.show_diagnostics = show_diagnostics
+
+    def _create_client(self, api_key):
+
+        self._info_client = OpenAI(api_key=api_key)
+
+    def infer_cols(self, tbl_desc=None):
+
+        msg = {
+            "table_description": tbl_desc,
+            "column_names": self.cols,
+            "column_types": self.col_types,
+        }
+
+        msg = json.dumps(msg)
+
+        try:
+            self.response = self._info_client.chat.completions.create(
+                model=self._model,
+                temperature=1,
+                top_p=1,
+                messages=[
+                    {"role": "system", "content": self.AGENT_INFER},
+                    {"role": "user", "content": msg},
+                ],
+            )
+
+            self.response = json.loads(
+                self.response.choices[0].message.content, strict=False
+            )
+
+            if self.show_diagnostics:
+                print_colored(self.response, color="yellow")
+
+            return self.response
+
+        except Exception as e:
+            print(e)
+            print(
+                """The agent who infers the column description encountered the error above.
+                You can continue as is, or restart to be able to pass more info."""
+            )
+
+
+# - **Predictive or Inferential Analysis**: Frame questions that might be answered through predictive models or inferential statistics.
+
+AGENT_QUESTION = """
+Generate possible analytics questions based on the provided information about a table. 
+Your questions should focus on meaningful insights or analysis that can be derived from the data.
+
+# Steps
+
+1. **Understand the Data Structure**: Review the description of the table, including the column names, their data types, and descriptions. This will help you understand the relationships and potential for analysis within the dataset.
+   
+2. **Identify Key Variables**: Note columns that are likely to be of particular interest due to their potential impact, variability, or business relevance.
+
+3. **Formulate Questions**:
+   - **Descriptive Analysis**: Ask questions that explore the basic characteristics of the data, such as summary statistics or distribution patterns.
+   - **Visual Analysis**: Create plots to hightlight different chracteristics of the data.
+   - **Comparative Analysis**: Develop questions that involve comparing different groups or relationships within the data.
+   - **Trend Analysis**: Consider potential timelines or sequences that could be analyzed for trends or changes over time.
+   
+# Output Format
+- Each question should be concise and focus on potential insights or analysis.
+- Do not insert in the questions and array of columns. Focus on one aspect at a time.
+- Output a json object with the following structure:
+
+{"1": "Question 1", "2": "Question 2", ...}
+
+# Examples
+
+**Input**: 
+- Table Description: Information about customer purchases in an e-commerce store.
+- Columns:
+  - Customer_ID (integer): Unique identifier for each customer.
+  - Purchase_Amount (decimal): Total amount of each purchase.
+  - Purchase_Date (datetime): Date and time of the purchase.
+  - Product_Category (string): Category of the purchased product.
+  - Payment_Method (string): Method used to make the payment.
+
+**Output**:
+{
+"1": "What is the average purchase amount spent by each customer?",
+"2": "How does the purchase amount differ across various product categories?",
+"3": "What is the trend in purchase amounts over time?",
+"4": "Which payment method is most commonly used for high-value purchases?",
+"5": "Do purchase amounts significantly differ between different customer segments based on purchase frequency?"
+} 
+
+# Notes
+
+- Consideration for different types of analysis ensures comprehensive exploration of the dataset's potential insights.
+- Avoid questions that require data not described in the columns or clearly unrelated to the provided data.
+- Avoid questions that involve a large number of columns or complex operations.
+- Adjust the complexity or simplicity of questions based on the available data and its descriptions.
+- Where possible, propose graphics and plots that could help answer the questions.
+"""
+
+
+class GenerateQuestionsAgent:
+
+    AGENT_QUESTION = AGENT_QUESTION
+
+    def __init__(self, api_key, model="gpt-4o", show_diagnostics=True):
+        self._create_client(api_key)
+        self._model = model
+        self.show_diagnostics = show_diagnostics
+
+    def _create_client(self, api_key):
+
+        self._info_client = OpenAI(api_key=api_key)
+
+    def generate_qustions(self, tbl_desc=None, col_desc=None, col_types=None):
+
+        msg = {
+            "Table description": tbl_desc,
+            "Column description": col_desc,
+            "Column types": col_types,
+        }
+
+        msg = json.dumps(msg)
+
+        try:
+            self.response = self._info_client.chat.completions.create(
+                model=self._model,
+                temperature=1,
+                top_p=1,
+                messages=[
+                    {"role": "system", "content": self.AGENT_QUESTION},
+                    {"role": "user", "content": msg},
+                ],
+            )
+
+            self.response = json.loads(
+                self.response.choices[0].message.content, strict=False
+            )
+
+            if self.show_diagnostics:
+                print_colored(self.response, color="yellow")
+
+            return self.response
+
+        except Exception as e:
+            print(e)
+            print(
+                """The agent who infers questions encountered the error above.
+                You can continue as is, or restart."""
+            )
